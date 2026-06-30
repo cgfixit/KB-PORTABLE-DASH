@@ -1,6 +1,7 @@
 from tkinter import Tk, Button, Frame, Entry, END
 import tkinter.messagebox
 import csv, datetime, webbrowser
+from pathlib import Path
 import clipboard
 
 w = 800
@@ -9,11 +10,11 @@ h = 750
 
 # Commands 
 def openDocs():
-    webbrowser.open('C:/Users/Chris/Documents/Projects/Python-KB/')
+    webbrowser.open(str(Path.home() / 'Documents' / 'Projects' / 'Python-KB'))
 def openCustDocs():
-    webbrowser.open('C:/Users/Chris/Documents/')    
+    webbrowser.open(str(Path.home() / 'Documents'))    
 def openPrinterIP():
-    webbrowser.open('C:/Users/Chris/Downloads/')    
+    webbrowser.open(str(Path.home() / 'Downloads'))    
 def alerts():
     webbrowser.open('Notifications.csv') 
 def sendEmail():
