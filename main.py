@@ -2,7 +2,6 @@ from tkinter import Tk, Button, Frame, Entry, END
 import tkinter.messagebox
 import csv, datetime, webbrowser
 from pathlib import Path
-import clipboard
 
 w = 800
 h = 750
@@ -234,6 +233,4 @@ root = Tk()
 hw = Homework(root)
 root.mainloop()
 
-# clipboard.clippy("This is just a tester")
-# ^ Keeping that for debugging..
 quit()
