@@ -20,14 +20,22 @@ A single CustomTkinter window over local SQLite + CSV files. Copy the folder ont
 
 ## Run (Windows / PowerShell)
 
+From the repo folder (Python 3.12+ on PATH, official installer includes Tk):
+
+```powershell
+.\run.ps1
+```
+
+Manual equivalent:
+
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -e .
+python -m pip install -e .
 python -m kbgui
 ```
 
-Or: `python main.py` from the repo root after the same install.
+Or: `python main.py` from the repo root after the same install. Execution policy: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` if `.\run.ps1` is blocked.
 
 ## Run (macOS / Linux)
 

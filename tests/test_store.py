@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kbgui.config import load_config
+from kbgui.config import load_config, write_data_dir_override
 from kbgui.launchers import run_launcher
 from kbgui.store import AdminRow, KbRow, delete_secret, initialize, set_secret
 
@@ -104,3 +104,30 @@ def test_empty_launcher_target_does_not_open() -> None:
     assert result.empty_target
     assert result.ok is False
     assert "config" in result.message.lower()
+
+
+def test_missing_file_launcher_does_not_quit(tmp_path: Path) -> None:
+    missing = tmp_path / "no-such-file.txt"
+    result = run_launcher("file", str(missing))
+    assert result.ok is False
+    assert result.empty_target is False
+    assert "exist" in result.message.lower()
+
+
+def test_data_dir_config_roundtrip(tmp_path: Path) -> None:
+    app_dir = tmp_path / "app"
+    data_dir = tmp_path / "kb-data"
+    app_dir.mkdir()
+    data_dir.mkdir()
+    write_data_dir_override(app_dir, data_dir)
+    cfg = load_config(app_dir=app_dir, environ={})
+    assert cfg.data_dir == data_dir.resolve()
+    text = (app_dir / "config.toml").read_text(encoding="utf-8")
+    assignment = next(ln for ln in text.splitlines() if ln.startswith("data_dir"))
+    assert "\\" not in assignment
+    store = initialize(cfg.data_dir, EXAMPLES)
+    try:
+        assert store.db_path.parent == cfg.data_dir / "data"
+        assert store.list_kb()
+    finally:
+        store.close()

@@ -599,12 +599,13 @@ def _mac_delete(account: str) -> None:
         return
 
 
-def _win_set(account: str, password: str) -> tuple[bool, str]:
-    try:
-        import ctypes
-        from ctypes import wintypes
-    except ImportError:
-        return False, "unavailable"
+def _win_api():
+    """Windows Credential Manager via ctypes. Prototypes required on 64-bit."""
+    import ctypes
+    from ctypes import wintypes
+
+    class FILETIME(ctypes.Structure):
+        _fields_ = [("dwLowDateTime", wintypes.DWORD), ("dwHighDateTime", wintypes.DWORD)]
 
     class CREDENTIAL(ctypes.Structure):
         _fields_ = [
@@ -612,9 +613,9 @@ def _win_set(account: str, password: str) -> tuple[bool, str]:
             ("Type", wintypes.DWORD),
             ("TargetName", wintypes.LPWSTR),
             ("Comment", wintypes.LPWSTR),
-            ("LastWritten", wintypes.FILETIME),
+            ("LastWritten", FILETIME),
             ("CredentialBlobSize", wintypes.DWORD),
-            ("CredentialBlob", ctypes.POINTER(ctypes.c_char)),
+            ("CredentialBlob", ctypes.c_void_p),
             ("Persist", wintypes.DWORD),
             ("AttributeCount", wintypes.DWORD),
             ("Attributes", ctypes.c_void_p),
@@ -622,17 +623,37 @@ def _win_set(account: str, password: str) -> tuple[bool, str]:
             ("UserName", wintypes.LPWSTR),
         ]
 
+    advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
+    advapi32.CredWriteW.argtypes = [ctypes.POINTER(CREDENTIAL), wintypes.DWORD]
+    advapi32.CredWriteW.restype = wintypes.BOOL
+    advapi32.CredReadW.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.POINTER(ctypes.c_void_p),
+    ]
+    advapi32.CredReadW.restype = wintypes.BOOL
+    advapi32.CredDeleteW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD]
+    advapi32.CredDeleteW.restype = wintypes.BOOL
+    advapi32.CredFree.argtypes = [ctypes.c_void_p]
+    return ctypes, CREDENTIAL, advapi32
+
+
+def _win_set(account: str, password: str) -> tuple[bool, str]:
+    try:
+        ctypes, credential_cls, advapi32 = _win_api()
+    except (ImportError, OSError, AttributeError):
+        return False, "unavailable"
     blob = password.encode("utf-16-le")
     buf = ctypes.create_string_buffer(blob, len(blob))
-    cred = CREDENTIAL()
+    cred = credential_cls()
     cred.Type = 1  # CRED_TYPE_GENERIC
     cred.TargetName = f"{SERVICE}/{account}"
     cred.CredentialBlobSize = len(blob)
-    cred.CredentialBlob = ctypes.cast(buf, ctypes.POINTER(ctypes.c_char))
+    cred.CredentialBlob = ctypes.cast(buf, ctypes.c_void_p)
     cred.Persist = 2  # CRED_PERSIST_LOCAL_MACHINE
     cred.UserName = account
     try:
-        advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
         ok = advapi32.CredWriteW(ctypes.byref(cred), 0)
     except OSError:
         return False, "unavailable"
@@ -641,10 +662,9 @@ def _win_set(account: str, password: str) -> tuple[bool, str]:
 
 def _win_has(account: str) -> bool:
     try:
-        import ctypes
-    except ImportError:
+        ctypes, _credential_cls, advapi32 = _win_api()
+    except (ImportError, OSError, AttributeError):
         return False
-    advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
     ptr = ctypes.c_void_p()
     try:
         ok = advapi32.CredReadW(f"{SERVICE}/{account}", 1, 0, ctypes.byref(ptr))
@@ -658,11 +678,10 @@ def _win_has(account: str) -> bool:
 
 def _win_delete(account: str) -> None:
     try:
-        import ctypes
-    except ImportError:
+        _ctypes, _credential_cls, advapi32 = _win_api()
+    except (ImportError, OSError, AttributeError):
         return
     try:
-        advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
         advapi32.CredDeleteW(f"{SERVICE}/{account}", 1, 0)
     except OSError:
         return
