@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+# Keep this id stable so Keychain / Credential Manager entries survive the GitHub rename.
 SERVICE = "kb-gui-lite"
 
 BOARD_FIELDS = ("issue", "fix", "project")

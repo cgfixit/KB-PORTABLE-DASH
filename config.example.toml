@@ -1,4 +1,4 @@
-# KB-GUI-Lite local config
+# KB-Portable-DASH local config
 # Copy to config.toml next to main.py (config.toml is gitignored).
 # The app runs fully offline. Do not put passwords in this file.
 
