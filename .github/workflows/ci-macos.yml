@@ -2,6 +2,8 @@ name: CI macOS
 
 on:
   push:
+    tags-ignore:
+      - "macos-*"
   pull_request:
 
 concurrency:

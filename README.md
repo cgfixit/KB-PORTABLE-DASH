@@ -17,7 +17,7 @@ A single CustomTkinter window over local SQLite + CSV files. Copy the folder ont
 - Not SaaS, not IT Glue, not CyClaw
 - Not multi-user sync, Dropbox, or git-as-a-database
 - Not a password manager, SSO, or cloud auth
-- No telemetry, no installer in this tree
+- No telemetry. Source tree has no installer; each merge to `main` publishes a macOS `.app` zip on GitHub Releases (ad-hoc signed, Apple Silicon, not notarized)
 
 ## Screenshots
 
@@ -121,3 +121,12 @@ python -m pytest
 python -m compileall -q kbgui main.py
 python -c "import kbgui"
 ```
+
+## macOS GitHub Release
+
+Each push to `main` runs `.github/workflows/release-macos.yml`: PyInstaller builds `KB-Portable-DASH.app`, ad-hoc `codesign`s it (`codesign -s -`; this repo has no Apple Developer ID secrets), zips it, and publishes a GitHub Release tagged `macos-<sha7>`.
+
+- Apple Silicon (the `macos-latest` runner). Not a universal binary.
+- First launch: right-click the `.app` → **Open** (Gatekeeper; it is not notarized).
+- `config.toml` and `data/` live **next to** the `.app`, not inside the bundle.
+- Local rebuild: `bash scripts/build-macos-app.sh` (Homebrew `python@3.12` with Tk).
