@@ -1,4 +1,4 @@
-# Windows launcher for KB-GUI-Lite. Run from anywhere:
+# Windows launcher for KB-Portable-DASH. Run from anywhere:
 #   powershell -File .\run.ps1
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
@@ -15,10 +15,14 @@ function Find-Python {
             return
         }
     }
-    throw "Python 3.12+ is required. Install from https://www.python.org/downloads/ and retry."
+    throw "Python 3.12+ is required. Install from https://www.python.org/downloads/windows/ (check Tcl/Tk) and retry."
 }
 
 $python = (Find-Python).Trim()
+& $python -c "import tkinter" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    throw "Tkinter is missing. Reinstall Python 3.12 from python.org and enable Tcl/Tk. Needed on Windows 10 and 11."
+}
 if (-not (Test-Path .\.venv\Scripts\python.exe)) {
     & $python -m venv .venv
 }

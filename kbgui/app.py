@@ -65,7 +65,7 @@ class App(ctk.CTk):
         super().__init__()
         self.cfg = cfg
         self.store = store
-        self.title("KB-GUI-Lite")
+        self.title("KB-Portable-DASH")
         self.geometry(self._initial_geometry())
         self.minsize(800, 560)
         appearance = cfg.appearance
@@ -77,7 +77,7 @@ class App(ctk.CTk):
 
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", padx=12, pady=(10, 0))
-        ctk.CTkLabel(header, text="KB-GUI-Lite", font=ctk.CTkFont(size=18, weight="bold")).pack(
+        ctk.CTkLabel(header, text="KB-Portable-DASH", font=ctk.CTkFont(size=18, weight="bold")).pack(
             side="left"
         )
         self.theme = ctk.CTkSegmentedButton(header, values=["dark", "light"], command=self._set_theme)
@@ -136,7 +136,7 @@ class App(ctk.CTk):
         messagebox.showinfo("Launcher", f"{label}: set this in config")
 
     def _info(self, message: str) -> None:
-        messagebox.showinfo("KB-GUI-Lite", message)
+        messagebox.showinfo("KB-Portable-DASH", message)
 
     def edit_data_folder(self) -> None:
         chosen = filedialog.askdirectory(initialdir=str(self.cfg.data_dir), mustexist=True)

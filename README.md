@@ -1,8 +1,8 @@
-# KB-GUI-Lite
+# KB-Portable-DASH
 
 Offline, LAN-shareable helpdesk console for a tech sitting on a ticket.
 
-A single CustomTkinter window over local SQLite + CSV files. Copy the folder onto a share, run it, keep working if the internet is down.
+A single CustomTkinter window over local SQLite + CSV files. Copy the folder onto a share, run it, keep working if the internet is down. GitHub repo: [cgfixit/KB-PORTABLE-DASH](https://github.com/cgfixit/KB-PORTABLE-DASH). Run with `python -m kbgui`.
 
 ## What it is
 
@@ -10,7 +10,7 @@ A single CustomTkinter window over local SQLite + CSV files. Copy the folder ont
 - Footer: **Edit data folder**, **Reload**, **Quit**
 - Data next to the app (or one folder you choose)
 - CSV import/export so a tech can still dump/share a folder
-- Windows-first, then macOS/Linux
+- Windows 10/11 first, then macOS/Linux
 
 ## What it is not
 
@@ -19,9 +19,29 @@ A single CustomTkinter window over local SQLite + CSV files. Copy the folder ont
 - Not a password manager, SSO, or cloud auth
 - No telemetry, no installer in this tree
 
-## Run (Windows / PowerShell)
+## Screenshots
 
-From the repo folder. Python 3.12+ from [python.org](https://www.python.org/downloads/) includes Tk.
+macOS window layout (dark theme) with the shipped example rows. Windows 10/11 uses the same CustomTkinter tabs and footer. Live `screencapture` of the Tk window needs Screen Recording permission; these PNGs match the app labels and example CSVs.
+
+**Board**
+
+![Board tab](docs/screenshots/board.png)
+
+**Knowledge Base**
+
+![Knowledge Base tab](docs/screenshots/knowledge-base.png)
+
+**Launchers**
+
+![Launchers tab](docs/screenshots/launchers.png)
+
+**Admin refs**
+
+![Admin refs tab](docs/screenshots/admin-refs.png)
+
+## Run (Windows 10 / 11 / PowerShell)
+
+From the repo folder. Python 3.12+ from [python.org](https://www.python.org/downloads/windows/) includes Tcl/Tk (tick it in the installer).
 
 ```powershell
 .\run.ps1
@@ -88,19 +108,16 @@ Never put live passwords, API keys, or customer rows in git. Only `*.example.csv
 
 ## CI (Windows and macOS)
 
-GitHub Actions (no secrets):
+GitHub Actions (no secrets). Runners are **Windows Server** and hosted macOS, not a local Win10/11 desktop session, so they prove install/import/tests — not a clicked GUI.
 
-- `.github/workflows/ci-windows.yml` — ruff + pytest on `windows-latest`
-- `.github/workflows/ci-macos.yml` — ruff + pytest on `macos-latest`
-- `.github/workflows/ci.yml` — ruff + pytest on `ubuntu-latest`
+- `.github/workflows/ci-windows.yml` — ruff, pytest, compile, import Tk + CustomTkinter
+- `.github/workflows/ci-macos.yml` — same
+- `.github/workflows/ci.yml` — Linux ruff, pytest, compile (no Tk GUI import)
 
 ```bash
 python -m pip install -e ".[dev]"
 python -m ruff check .
 python -m pytest
+python -m compileall -q kbgui main.py
 python -c "import kbgui"
 ```
-
-## Screenshot
-
-Add a local PNG at `docs/screenshot.png` if you want a picture in this README. Do not hotlink screenshots.

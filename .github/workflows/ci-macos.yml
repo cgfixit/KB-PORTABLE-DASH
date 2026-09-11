@@ -27,5 +27,7 @@ jobs:
         run: python -m ruff check .
       - name: Pytest
         run: python -m pytest
-      - name: Import package
-        run: python -c "import kbgui; print(kbgui.__version__)"
+      - name: Compile
+        run: python -m compileall -q kbgui main.py
+      - name: Import GUI stack
+        run: python -c "import tkinter, customtkinter, kbgui.app; print(kbgui.__version__)"
