@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import patch
 
 from kbgui.config import load_config, write_data_dir_override
 from kbgui.launchers import run_launcher
@@ -237,4 +238,55 @@ def test_empty_command_launcher_asks_for_config() -> None:
     assert result.empty_target
     assert result.ok is False
     assert "config" in result.message.lower()
+
+
+def test_command_launcher_uses_shell_false() -> None:
+    with patch("kbgui.launchers.subprocess.Popen") as popen:
+        result = run_launcher("command", "echo hello")
+        assert result.ok is True
+        assert result.empty_target is False
+        popen.assert_called_once()
+        args, kwargs = popen.call_args
+        assert kwargs.get("shell") is False
+        assert args[0] == ["echo", "hello"]
+
+
+def test_unknown_launcher_kind_does_not_quit() -> None:
+    result = run_launcher("nope", "https://example.invalid")
+    assert result.ok is False
+    assert "unknown" in result.message.lower()
+
+
+def test_search_kb_customer_ticket_and_literal_percent(tmp_path: Path) -> None:
+    store = initialize(tmp_path, EXAMPLES)
+    try:
+        new_id = store.upsert_kb(
+            KbRow(
+                id=None,
+                customer="AcmeSearch",
+                ticket="T-9",
+                issue="vpn down after sleep",
+                resolution="reboot concentrator",
+                notes="",
+            )
+        )
+        assert any(row.id == new_id for row in store.search_kb("T-9"))
+        assert any(row.id == new_id for row in store.search_kb("AcmeSearch"))
+        pct_id = store.upsert_kb(
+            KbRow(
+                id=None,
+                customer="PctCo",
+                ticket="1",
+                issue="disk 100% full",
+                resolution="clean",
+                notes="",
+            )
+        )
+        hits = store.search_kb("100%")
+        assert any(row.id == pct_id for row in hits)
+        only_pct = store.search_kb("%")
+        assert any(row.id == pct_id for row in only_pct)
+        assert len(only_pct) < len(store.list_kb())
+    finally:
+        store.close()
 
