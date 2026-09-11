@@ -1,0 +1,91 @@
+# KB-GUI-Lite local config
+# Copy to config.toml next to main.py (config.toml is gitignored).
+# The app runs fully offline. Do not put passwords in this file.
+
+[window]
+width = 1100
+height = 750
+# dark | light | system
+appearance = "dark"
+
+# Optional override. Default is the directory containing main.py / the executable.
+# Env KB_GUI_DATA_DIR wins over this key.
+# data_dir = "/path/to/kb-data"
+
+# Launchers: label, kind = url | folder | file | command, target
+# Empty target: click shows "set this in config" and does not quit.
+#
+# Old button labels from the 2020 Tkinter launcher (fill real URLs/paths locally):
+#   Email Hosting, Send Email, Firewall Admin, Server/Local Creds, Knowledge Base,
+#   Customer Docs, Printer IPs, IWSIT Docs, T3 Exchange, SC Docs,
+#   IT Glue, Cloud, Labtech, Webmail
+
+[[launchers]]
+label = "Email Hosting"
+kind = "url"
+target = ""
+
+[[launchers]]
+label = "Send Email"
+kind = "folder"
+target = ""
+
+[[launchers]]
+label = "Firewall Admin"
+kind = "url"
+target = ""
+
+[[launchers]]
+label = "Server/Local Creds"
+kind = "file"
+target = ""
+
+[[launchers]]
+label = "Knowledge Base"
+kind = "file"
+target = ""
+
+[[launchers]]
+label = "Customer Docs"
+kind = "folder"
+target = ""
+
+[[launchers]]
+label = "Printer IPs"
+kind = "file"
+target = ""
+
+[[launchers]]
+label = "IWSIT Docs"
+kind = "folder"
+target = ""
+
+[[launchers]]
+label = "T3 Exchange"
+kind = "url"
+target = ""
+
+[[launchers]]
+label = "SC Docs"
+kind = "folder"
+target = ""
+
+[[launchers]]
+label = "IT Glue"
+kind = "url"
+target = ""
+
+[[launchers]]
+label = "Cloud"
+kind = "url"
+target = ""
+
+[[launchers]]
+label = "Labtech"
+kind = "url"
+target = ""
+
+[[launchers]]
+label = "Webmail"
+kind = "url"
+target = ""

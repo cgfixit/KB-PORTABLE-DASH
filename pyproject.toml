@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kbgui"
+version = "0.1.0"
+description = "Offline, LAN-shareable helpdesk console (CustomTkinter)."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "customtkinter>=5.2,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+kbgui = "kbgui.app:run"
+
+[tool.setuptools.packages.find]
+include = ["kbgui"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
