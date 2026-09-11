@@ -141,9 +141,10 @@ class Store:
 
     def open(self) -> None:
         self.files_dir.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(self.db_path)
+        self._conn = sqlite3.connect(self.db_path, timeout=5)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys = ON")
+        self._conn.execute("PRAGMA busy_timeout = 5000")
         self._init_schema()
 
     def close(self) -> None:
@@ -222,7 +223,10 @@ class Store:
             """
         )
         try:
-            c.execute("INSERT INTO kb_fts(kb_fts) VALUES('rebuild')")
+            n_kb = c.execute("SELECT COUNT(*) FROM kb").fetchone()[0]
+            n_fts = c.execute("SELECT COUNT(*) FROM kb_fts").fetchone()[0]
+            if n_fts == 0 and n_kb:
+                c.execute("INSERT INTO kb_fts(kb_fts) VALUES('rebuild')")
         except sqlite3.OperationalError:
             pass
         return True
@@ -273,10 +277,11 @@ class Store:
     def list_board(self, query: str = "") -> list[BoardRow]:
         q = query.strip()
         if q:
-            like = f"%{q}%"
+            like = _like_pattern(q)
             rows = self.conn.execute(
                 "SELECT id, issue, fix, project FROM board "
-                "WHERE issue LIKE ? OR fix LIKE ? OR project LIKE ? ORDER BY id",
+                "WHERE issue LIKE ? ESCAPE '\\' OR fix LIKE ? ESCAPE '\\' "
+                "OR project LIKE ? ESCAPE '\\' ORDER BY id",
                 (like, like, like),
             ).fetchall()
         else:
@@ -327,6 +332,7 @@ class Store:
         q = query.strip()
         if not q:
             return self.list_kb()
+        by_id: dict[int, KbRow] = {}
         if self._fts:
             try:
                 rows = self.conn.execute(
@@ -335,18 +341,21 @@ class Store:
                     "WHERE kb_fts MATCH ? ORDER BY kb.id",
                     (_fts_query(q),),
                 ).fetchall()
-                if rows:
-                    return [_kb_from_row(r) for r in rows]
+                for r in rows:
+                    by_id[int(r["id"])] = _kb_from_row(r)
             except sqlite3.OperationalError:
                 pass
-        like = f"%{q}%"
+        like = _like_pattern(q)
         rows = self.conn.execute(
             "SELECT id, customer, ticket, issue, resolution, notes FROM kb "
-            "WHERE issue LIKE ? OR resolution LIKE ? OR notes LIKE ? "
-            "OR customer LIKE ? OR ticket LIKE ? ORDER BY id",
+            "WHERE issue LIKE ? ESCAPE '\\' OR resolution LIKE ? ESCAPE '\\' "
+            "OR notes LIKE ? ESCAPE '\\' OR customer LIKE ? ESCAPE '\\' "
+            "OR ticket LIKE ? ESCAPE '\\' ORDER BY id",
             (like, like, like, like, like),
         ).fetchall()
-        return [_kb_from_row(r) for r in rows]
+        for r in rows:
+            by_id[int(r["id"])] = _kb_from_row(r)
+        return [by_id[i] for i in sorted(by_id)]
 
     def upsert_kb(self, row: KbRow) -> int:
         if row.id is None:
@@ -378,8 +387,8 @@ class Store:
         cols = ", ".join(["id", *fields])
         q = query.strip()
         if q:
-            likes = " OR ".join(f"{f} LIKE ?" for f in fields)
-            params = tuple(f"%{q}%" for _ in fields)
+            likes = " OR ".join(f"{f} LIKE ? ESCAPE '\\'" for f in fields)
+            params = tuple(_like_pattern(q) for _ in fields)
             rows = self.conn.execute(
                 f"SELECT {cols} FROM {table} WHERE {likes} ORDER BY id", params
             ).fetchall()
@@ -494,6 +503,11 @@ def _kb_from_row(r: sqlite3.Row) -> KbRow:
         resolution=r["resolution"],
         notes=r["notes"],
     )
+
+
+def _like_pattern(raw: str) -> str:
+    escaped = raw.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
 
 
 def _fts_query(raw: str) -> str:
