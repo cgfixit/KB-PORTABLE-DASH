@@ -33,9 +33,22 @@ class AppConfig:
     config_path: Path | None = None
 
 
+def _meipass() -> Path | None:
+    raw = getattr(sys, "_MEIPASS", None)
+    if not raw:
+        return None
+    path = Path(raw)
+    return path if path.is_dir() else None
+
+
 def default_app_dir() -> Path:
     if getattr(sys, "frozen", False):
-        return Path(sys.executable).resolve().parent
+        exe = Path(sys.executable).resolve()
+        if sys.platform == "darwin":
+            for parent in exe.parents:
+                if parent.suffix == ".app":
+                    return parent.parent
+        return exe.parent
     return Path(__file__).resolve().parent.parent
 
 
@@ -43,6 +56,11 @@ def examples_dir(app_dir: Path) -> Path:
     candidate = app_dir / "examples"
     if candidate.is_dir():
         return candidate
+    bundled = _meipass()
+    if bundled is not None:
+        inner = bundled / "examples"
+        if inner.is_dir():
+            return inner
     return Path(__file__).resolve().parent.parent / "examples"
 
 
@@ -78,6 +96,12 @@ def load_config(
 
     cfg_path = app_dir / "config.toml"
     example_path = app_dir / "config.example.toml"
+    bundled_example = None
+    meipass = _meipass()
+    if meipass is not None:
+        candidate = meipass / "config.example.toml"
+        if candidate.is_file():
+            bundled_example = candidate
     raw: dict = {}
     used_path: Path | None = None
     if cfg_path.is_file():
@@ -86,6 +110,9 @@ def load_config(
     elif example_path.is_file():
         raw = _read_toml(example_path)
         used_path = example_path
+    elif bundled_example is not None:
+        raw = _read_toml(bundled_example)
+        used_path = bundled_example
 
     window = raw.get("window") if isinstance(raw.get("window"), dict) else {}
     width = int(window.get("width", DEFAULT_WIDTH) or DEFAULT_WIDTH)
