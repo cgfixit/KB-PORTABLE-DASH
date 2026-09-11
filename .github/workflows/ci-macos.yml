@@ -1,11 +1,11 @@
-name: CI Linux
+name: CI macOS
 
 on:
   push:
   pull_request:
 
 concurrency:
-  group: ci-linux-${{ github.workflow }}-${{ github.ref }}
+  group: ci-macos-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -13,8 +13,8 @@ permissions:
 
 jobs:
   test:
-    name: Linux
-    runs-on: ubuntu-latest
+    name: macOS
+    runs-on: macos-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

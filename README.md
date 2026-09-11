@@ -6,7 +6,8 @@ A single CustomTkinter window over local SQLite + CSV files. Copy the folder ont
 
 ## What it is
 
-- A fast desktop console: board, knowledge base, launchers, admin refs
+- Fast desktop console: **Board**, **Knowledge Base**, **Launchers**, **Admin refs**
+- Footer: **Edit data folder**, **Reload**, **Quit**
 - Data next to the app (or one folder you choose)
 - CSV import/export so a tech can still dump/share a folder
 - Windows-first, then macOS/Linux
@@ -20,11 +21,13 @@ A single CustomTkinter window over local SQLite + CSV files. Copy the folder ont
 
 ## Run (Windows / PowerShell)
 
-From the repo folder (Python 3.12+ on PATH, official installer includes Tk):
+From the repo folder. Python 3.12+ from [python.org](https://www.python.org/downloads/) includes Tk.
 
 ```powershell
 .\run.ps1
 ```
+
+If scripts are blocked: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 Manual equivalent:
 
@@ -35,18 +38,30 @@ python -m pip install -e .
 python -m kbgui
 ```
 
-Or: `python main.py` from the repo root after the same install. Execution policy: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` if `.\run.ps1` is blocked.
+`python main.py` from the repo root starts the same app after install.
+
+Confirm Tk: `python -c "import tkinter"`
 
 ## Run (macOS / Linux)
+
+Homebrew `python@3.12` includes Tk. Pyenv builds often do not.
 
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+python -m pip install -e .
 python -m kbgui
 ```
 
-Needs Python 3.12+ with Tk (`python3 -c "import tkinter"`). On macOS, Homebrew `python@3.12` includes Tk. Pyenv builds often do not.
+Confirm Tk: `python3 -c "import tkinter"`
+
+## Config and launchers
+
+1. Copy `config.example.toml` to `config.toml` next to `main.py` (`config.toml` is gitignored).
+2. Fill each launcher `target` (`kind` is `url`, `folder`, `file`, or `command`).
+3. Empty target: the app shows **set this in config** and does not quit.
+
+Do not put passwords in `config.toml`.
 
 ## Data-dir contract
 
@@ -57,8 +72,6 @@ Resolve once, in this order:
 3. Directory containing `main.py` / the executable
 
 SQLite lives at `<data_dir>/data/kb.sqlite`. First run copies `examples/*.example.csv` into that `data/` folder (gitignored) and imports them.
-
-Copy `config.example.toml` to `config.toml` to set window size, theme, launchers, and an optional `data_dir`. `config.toml` is gitignored.
 
 Footer **Edit data folder** writes `data_dir` into local `config.toml` and reloads.
 
@@ -73,14 +86,21 @@ Firewall / O365 / creds password columns are optional and shown masked.
 
 Never put live passwords, API keys, or customer rows in git. Only `*.example.csv` templates are tracked.
 
+## CI (Windows and macOS)
+
+GitHub Actions (no secrets):
+
+- `.github/workflows/ci-windows.yml` — ruff + pytest on `windows-latest`
+- `.github/workflows/ci-macos.yml` — ruff + pytest on `macos-latest`
+- `.github/workflows/ci.yml` — ruff + pytest on `ubuntu-latest`
+
+```bash
+python -m pip install -e ".[dev]"
+python -m ruff check .
+python -m pytest
+python -c "import kbgui"
+```
+
 ## Screenshot
 
 Add a local PNG at `docs/screenshot.png` if you want a picture in this README. Do not hotlink screenshots.
-
-## Tests / lint
-
-```bash
-pip install -e ".[dev]"
-ruff check .
-pytest
-```
