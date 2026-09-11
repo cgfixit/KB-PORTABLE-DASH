@@ -17,7 +17,7 @@ A single CustomTkinter window over local SQLite + CSV files. Copy the folder ont
 - Not SaaS, not IT Glue, not CyClaw
 - Not multi-user sync, Dropbox, or git-as-a-database
 - Not a password manager, SSO, or cloud auth
-- No telemetry. Source tree has no installer; each merge to `main` publishes a macOS `.app` zip on GitHub Releases (Developer ID + notarized once the repo secrets are set; Apple Silicon)
+- No telemetry. Source tree has no installer; each merge to `main` publishes a macOS `.app` zip on GitHub Releases (ad-hoc signed, Apple Silicon, not notarized)
 
 ## Screenshots
 
@@ -108,7 +108,7 @@ Never put live passwords, API keys, or customer rows in git. Only `*.example.csv
 
 ## CI (Windows and macOS)
 
-Test CI needs no secrets. Runners are **Windows Server** and hosted macOS, not a local Win10/11 desktop session, so they prove install/import/tests — not a clicked GUI. The macOS GitHub Release job on `main` needs Developer ID secrets (see below).
+GitHub Actions (no secrets). Runners are **Windows Server** and hosted macOS, not a local Win10/11 desktop session, so they prove install/import/tests — not a clicked GUI.
 
 - `.github/workflows/ci-windows.yml` — ruff, pytest, compile, import Tk + CustomTkinter
 - `.github/workflows/ci-macos.yml` — same
@@ -124,36 +124,9 @@ python -c "import kbgui"
 
 ## macOS GitHub Release
 
-Each push to `main` runs `.github/workflows/release-macos.yml`: PyInstaller builds `KB-Portable-DASH.app`, signs it with **Developer ID Application**, notarizes with `notarytool`, staples the ticket, zips it, and publishes a GitHub Release tagged `macos-<sha7>`. Pull requests still build an **ad-hoc** `.app` so CI proves the packager without Apple secrets.
+Each push to `main` runs `.github/workflows/release-macos.yml`: PyInstaller builds `KB-Portable-DASH.app`, ad-hoc `codesign`s it (`codesign -s -`; this repo has no Apple Developer ID secrets), zips it, and publishes a GitHub Release tagged `macos-<sha7>`.
 
 - Apple Silicon (the `macos-latest` runner). Not a universal binary.
-- After notarization, Gatekeeper should allow a normal double-click. Until the six secrets below are set, **`main` release jobs fail closed** (they will not publish another ad-hoc zip).
+- First launch: right-click the `.app` → **Open** (Gatekeeper; it is not notarized).
 - `config.toml` and `data/` live **next to** the `.app`, not inside the bundle.
-- Local rebuild: `bash scripts/build-macos-app.sh` (Homebrew `python@3.12` with Tk). Set `CODESIGN_IDENTITY` to a Keychain Developer ID name to sign locally.
-
-### GitHub Actions secrets (repo Settings → Secrets and variables → Actions)
-
-These values never go in git. This Mac currently has **zero** Developer ID identities; create them in an Apple Developer Program account, then:
-
-```bash
-# Developer ID Application certificate exported from Keychain as cert.p12
-base64 -i cert.p12 | gh secret set MACOS_CERTIFICATE -R cgfixit/KB-PORTABLE-DASH
-printf '%s' 'EXAMPLEONLY' | gh secret set MACOS_CERTIFICATE_PWD -R cgfixit/KB-PORTABLE-DASH
-printf '%s' 'EXAMPLEONLY' | gh secret set APPLE_TEAM_ID -R cgfixit/KB-PORTABLE-DASH
-
-# App Store Connect API key (Users and Access → Integrations → Team Keys), AuthKey_XXXXXX.p8
-base64 -i AuthKey_XXXXXX.p8 | gh secret set APP_STORE_CONNECT_API_KEY -R cgfixit/KB-PORTABLE-DASH
-printf '%s' 'EXAMPLEONLY' | gh secret set APP_STORE_CONNECT_KEY_ID -R cgfixit/KB-PORTABLE-DASH
-printf '%s' 'EXAMPLEONLY' | gh secret set APP_STORE_CONNECT_ISSUER_ID -R cgfixit/KB-PORTABLE-DASH
-```
-
-| Secret | What it is |
-|---|---|
-| `MACOS_CERTIFICATE` | base64 of Developer ID Application `.p12` |
-| `MACOS_CERTIFICATE_PWD` | password for that `.p12` |
-| `APPLE_TEAM_ID` | 10-character Team ID |
-| `APP_STORE_CONNECT_API_KEY` | base64 of the `.p8` key |
-| `APP_STORE_CONNECT_KEY_ID` | Key ID |
-| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID (UUID) |
-
-Official: [Using secrets in GitHub Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets), [Customizing the notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).
+- Local rebuild: `bash scripts/build-macos-app.sh` (Homebrew `python@3.12` with Tk).
