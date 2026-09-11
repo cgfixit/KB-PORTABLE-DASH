@@ -1,5 +1,3 @@
-"""Thin entrypoint — same as python -m kbgui."""
-
 from kbgui.app import run
 
 if __name__ == "__main__":

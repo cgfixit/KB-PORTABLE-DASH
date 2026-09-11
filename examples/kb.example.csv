@@ -1,0 +1,2 @@
+customer,ticket,issue,resolution,notes
+Example Corp,1001,Cannot print from laptop,Reinstall the vendor driver and set it as the default printer,Sample row — replace locally
